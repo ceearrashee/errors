@@ -7,7 +7,7 @@ import (
 
 type (
 	// Error represents an error structure that includes a description and an error string.
-	// It is useful for providing additional context or user-friendly messages alongside the actual error text.
+	// It is useful for providing additional context or user-friendly messages alongside the error text.
 	Error struct {
 		Description string
 		error       error
@@ -183,7 +183,7 @@ func callers() *Stack {
 	return &st
 }
 
-// GetOriginalPredefinedError retrieves the first predefined error in the error chain, if any exist.
+// GetOriginalPredefinedError retrieves the first predefined error in the error chain if any exist.
 //
 // Returns:
 //   - error: the first predefined error in the chain, or the original error if no predefined error is found.
