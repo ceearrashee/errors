@@ -92,6 +92,10 @@ func (e *Error) GetOriginalErrorMessage() string {
 		errToUse = originalErr
 	}
 
+	if errToUse == nil {
+		return fmt.Sprintf("%s", e.Description)
+	}
+
 	return fmt.Sprintf("%s: %s", e.Description, errToUse.Error())
 }
 
