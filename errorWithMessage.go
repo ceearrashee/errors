@@ -3,6 +3,8 @@ package errors
 import (
 	"fmt"
 	"runtime"
+
+	"github.com/samber/lo"
 )
 
 type (
@@ -192,7 +194,7 @@ func callers() *Stack {
 // Returns:
 //   - error: the first predefined error in the chain, or the original error if no predefined error is found.
 func (e *Error) GetOriginalPredefinedError() error {
-	var predefinedErr = e.error
+	var predefinedErr = lo.If(e.error == nil, error(e)).Else(e.error)
 
 	for err := Unwrap(e.error); err != nil; err = Unwrap(err) {
 		switch {

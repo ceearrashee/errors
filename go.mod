@@ -2,7 +2,10 @@ module github.com/ceearrashee/errors
 
 go 1.24.0
 
-require github.com/DataDog/dd-trace-go/v2 v2.2.2
+require (
+	github.com/DataDog/dd-trace-go/v2 v2.2.2
+	github.com/samber/lo v1.51.0
+)
 
 require (
 	github.com/DataDog/appsec-internal-go v1.14.0 // indirect
