@@ -71,19 +71,15 @@ func HandleError(ctx context.Context, err error) error {
 	defer span.Finish()
 
 	var (
-		typedError *errors.Error
-		stack      string
+		typedErrorPtr *errors.Error
+		typedError    errors.Error
+		stack         string
 	)
 
-	if errors.As(err, &typedError) {
+	if errors.As(err, &typedErrorPtr) {
+		stack = strings.Join(typedErrorPtr.GetCallStack(), "\n")
+	} else if errors.As(err, &typedError) {
 		stack = strings.Join(typedError.GetCallStack(), "\n")
-	} else {
-		var er error
-
-		stack, er = buildStack(2)
-		if er != nil {
-			return errors.Wrapf(er, "failed to build stack trace")
-		}
 	}
 
 	// Build application stack skipping helper frames.
@@ -92,7 +88,11 @@ func HandleError(ctx context.Context, err error) error {
 	span.SetTag(ext.Error, true)
 	span.SetTag(ext.ErrorMsg, err.Error())
 	span.SetTag(ext.ErrorType, fmt.Sprintf("%T", err))
-	span.SetTag(ext.ErrorStack, stack)
+
+	if stack != "" {
+		span.SetTag(ext.ErrorStack, stack)
+	}
+
 	setSpanRequestInfo(ctx, span)
 
 	return nil
