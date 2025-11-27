@@ -12,6 +12,8 @@ var (
 	Unwrap = stdErrors.Unwrap
 	// As is a wrapper for errors.As.
 	As = stdErrors.As
+	// Join is a wrapper for errors.Join.
+	Join = stdErrors.Join
 	// Errorf is a wrapper for fmt.Errorf.
 	Errorf = fmt.Errorf //nolint:gochecknoglobals
 )
