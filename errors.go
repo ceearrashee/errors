@@ -191,3 +191,71 @@ func AddCustomCallStack(err error, callStack *Stack) error {
 		error:       err,
 	}
 }
+
+// WrapPublic wraps an existing error with a public message that is safe to display to end users.
+//
+// Parameters:
+//   - err: the original error to wrap
+//   - message: a user-friendly public message
+//
+// Returns:
+//   - error: a wrapped error marked as public with the original error, message, and stack trace, or nil if the input error is nil
+func WrapPublic(err error, message string) error {
+	if err == nil {
+		return nil
+	}
+
+	return &Error{
+		Description: message,
+		stack:       callers(),
+		error:       err,
+		isPublic:    true,
+	}
+}
+
+// WrapfPublic wraps an existing error with a formatted public message that is safe to display to end users.
+//
+// Parameters:
+//   - err: the original error to wrap
+//   - format: a format string for the public message
+//   - args: optional arguments for formatting the message
+//
+// Returns:
+//   - error: a wrapped error marked as public with formatted message and stack trace, or nil if the input error is nil
+func WrapfPublic(err error, format string, args ...any) error {
+	if err == nil {
+		return nil
+	}
+
+	return &Error{
+		Description: fmt.Sprintf(format, args...),
+		stack:       callers(),
+		error:       err,
+		isPublic:    true,
+	}
+}
+
+// FindPublicError traverses an error chain to locate the first public error that is safe to display to end users.
+//
+// Parameters:
+//   - err: the root error to search through
+//
+// Returns:
+//   - error: the first public error in the chain, or nil if none are found
+func FindPublicError(err error) error {
+	current := err
+
+	// Traverse the entire error chain.
+	for current != nil {
+		var frameworkErr *Error
+		if As(current, &frameworkErr) && frameworkErr != nil && frameworkErr.isPublic {
+			// Found a public error.
+			return frameworkErr
+		}
+
+		// Continue unwrapping.
+		current = Unwrap(current)
+	}
+
+	return nil
+}

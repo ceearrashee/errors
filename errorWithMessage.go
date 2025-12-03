@@ -14,6 +14,7 @@ type (
 		Description string
 		error       error
 		stack       *Stack
+		isPublic    bool // indicates if this error message is safe to display to end users
 	}
 
 	// Stack represents a slice of uintptrs, typically used to store function call stack pointers.
@@ -143,6 +144,14 @@ func (e *Error) Wrapf(format string, err error) error {
 // Unwrap returns the wrapped error, enabling error unwrapping in chains and supporting the errors.Unwrap interface.
 func (e *Error) Unwrap() error {
 	return e.error
+}
+
+// IsPublic returns whether this error message is safe to display to end users.
+//
+// Returns:
+//   - bool: true if the error is marked as public, false otherwise.
+func (e *Error) IsPublic() bool {
+	return e.isPublic
 }
 
 // GetCallStack retrieves the function call stack associated with the error.
