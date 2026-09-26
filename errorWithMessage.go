@@ -151,7 +151,7 @@ func (e *Error) Unwrap() error {
 // Returns:
 //   - bool: true if the error is marked as public, false otherwise.
 func (e *Error) IsPublic() bool {
-	return e.isPublic
+	return e != nil && e.isPublic
 }
 
 // GetCallStack retrieves the function call stack associated with the error.

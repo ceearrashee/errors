@@ -3,6 +3,7 @@ package errors
 import (
 	stdErrors "errors"
 	"fmt"
+	"iter"
 )
 
 var (
@@ -28,18 +29,10 @@ var (
 func FindOriginalErrorWithStack(err error) *Error {
 	var lastFrameworkErrWithStack *Error
 
-	current := err
-
-	// Traverse the entire error chain.
-	for current != nil {
-		var frameworkErr *Error
-		if As(current, &frameworkErr) && frameworkErr.GetCallStack() != nil {
-			// Found a framework error with stack, save it.
+	for frameworkErr := range frameworkErrors(err) {
+		if frameworkErr != nil && frameworkErr.stack != nil {
 			lastFrameworkErrWithStack = frameworkErr
 		}
-
-		// Continue unwrapping.
-		current = Unwrap(current)
 	}
 
 	return lastFrameworkErrWithStack
@@ -53,20 +46,25 @@ func FindOriginalErrorWithStack(err error) *Error {
 // Returns:
 //   - *Error: the first framework-specific error in the chain, or nil if not found
 func FindFirstErrorWithStack(err error) error {
-	current := err
-
-	// Traverse the entire error chain.
-	for current != nil {
-		var frameworkErr *Error
-		if As(current, &frameworkErr) {
-			return frameworkErr
-		}
-
-		// Continue unwrapping.
-		current = Unwrap(current)
+	var frameworkErr *Error
+	if As(err, &frameworkErr) {
+		return frameworkErr
 	}
 
-	return current
+	return nil
+}
+
+// frameworkErrors yields the *Error that As finds at each link of err's Unwrap chain.
+func frameworkErrors(err error) iter.Seq[*Error] {
+	return func(yield func(*Error) bool) {
+		var frameworkErr *Error
+
+		for current := err; current != nil; current = Unwrap(current) {
+			if As(current, &frameworkErr) && !yield(frameworkErr) {
+				return
+			}
+		}
+	}
 }
 
 // New creates a new Error instance with the specified description.
@@ -243,18 +241,10 @@ func WrapfPublic(err error, format string, args ...any) error {
 // Returns:
 //   - error: the first public error in the chain, or nil if none are found
 func FindPublicError(err error) error {
-	current := err
-
-	// Traverse the entire error chain.
-	for current != nil {
-		var frameworkErr *Error
-		if As(current, &frameworkErr) && frameworkErr != nil && frameworkErr.isPublic {
-			// Found a public error.
+	for frameworkErr := range frameworkErrors(err) {
+		if frameworkErr.IsPublic() {
 			return frameworkErr
 		}
-
-		// Continue unwrapping.
-		current = Unwrap(current)
 	}
 
 	return nil
