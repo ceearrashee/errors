@@ -147,7 +147,7 @@ func WrapfWithCustomErr(originalErr, wrappingErr error, format string, args ...a
 	return &Error{
 		Description: fmt.Sprintf(format, args...),
 		stack:       callers(),
-		error:       fmt.Errorf("%w: %v", wrappingErr, originalErr),
+		error:       fmt.Errorf("%w: %w", wrappingErr, originalErr),
 	}
 }
 
@@ -166,7 +166,7 @@ func WrapWithCustomErr(originalErr, wrappingErr error) error {
 
 	return &Error{
 		stack: callers(),
-		error: fmt.Errorf("%w: %v", wrappingErr, originalErr),
+		error: fmt.Errorf("%w: %w", wrappingErr, originalErr),
 	}
 }
 
