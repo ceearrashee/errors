@@ -58,6 +58,35 @@ func TestFindPublicErrorSearchesTheWholeTree(t *testing.T) {
 	}
 }
 
+// memberBehindAs exposes its member only through an As method, as a go-multierror chain does.
+type memberBehindAs struct {
+	member error
+}
+
+func (m memberBehindAs) Error() string {
+	return m.member.Error()
+}
+
+func (m memberBehindAs) As(target any) bool {
+	return errors.As(m.member, target)
+}
+
+// TestFindPublicErrorUsesAsMethods verifies that a public error reachable only through an error's own
+// As method is still found.
+func TestFindPublicErrorUsesAsMethods(t *testing.T) {
+	err := errors.Wrapf(memberBehindAs{member: errors.WrapPublic(errors.ErrConflict, "The order is already paid")},
+		"paying order %d", 7)
+
+	var frameworkErr *errors.Error
+	if !errors.As(errors.FindPublicError(err), &frameworkErr) {
+		t.Fatalf("expected a public error in %v", err)
+	}
+
+	if frameworkErr.Description != "The order is already paid" {
+		t.Errorf("Description = %q, want %q", frameworkErr.Description, "The order is already paid")
+	}
+}
+
 // TestFindPublicErrorIgnoresATreeWithoutOne verifies that a join or a custom wrap with no public
 // error anywhere yields nil.
 func TestFindPublicErrorIgnoresATreeWithoutOne(t *testing.T) {

@@ -237,7 +237,9 @@ func WrapfPublic(err error, format string, args ...any) error {
 //
 // The search visits the tree in the order errors.Is and errors.As use: depth first, each error before
 // the errors it wraps, and the members of a join or of a multi-%w wrap from left to right. So the
-// outermost public error wins, and one inside errors.Join or WrapWithCustomErr is still found.
+// outermost public error wins, and one inside errors.Join or WrapWithCustomErr is still found. At each
+// error it also checks the first *Error that As finds there, so an error that exposes a member only
+// through its own As method, as a go-multierror chain does, is searched as far as that.
 //
 // Parameters:
 //   - err: the root error to search through
@@ -249,12 +251,12 @@ func FindPublicError(err error) error {
 		return nil
 	}
 
-	// A type assertion, not As: the walk below visits every error of the tree itself.
-	if frameworkErr, ok := err.(*Error); ok && frameworkErr.IsPublic() { //nolint:errorlint
+	var frameworkErr *Error
+	if As(err, &frameworkErr) && frameworkErr.IsPublic() {
 		return frameworkErr
 	}
 
-	switch wrapper := err.(type) { //nolint:errorlint
+	switch wrapper := err.(type) { //nolint:errorlint // the walk visits every error of the tree itself
 	case interface{ Unwrap() error }:
 		return FindPublicError(wrapper.Unwrap())
 	case interface{ Unwrap() []error }:
