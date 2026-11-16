@@ -233,17 +233,35 @@ func WrapfPublic(err error, format string, args ...any) error {
 	}
 }
 
-// FindPublicError traverses an error chain to locate the first public error that is safe to display to end users.
+// FindPublicError searches an error tree for the first public error that is safe to display to end users.
+//
+// The search visits the tree in the order errors.Is and errors.As use: depth first, each error before
+// the errors it wraps, and the members of a join or of a multi-%w wrap from left to right. So the
+// outermost public error wins, and one inside errors.Join or WrapWithCustomErr is still found.
 //
 // Parameters:
 //   - err: the root error to search through
 //
 // Returns:
-//   - error: the first public error in the chain, or nil if none are found
+//   - error: the first public error in the tree, or nil if none is found
 func FindPublicError(err error) error {
-	for frameworkErr := range frameworkErrors(err) {
-		if frameworkErr.IsPublic() {
-			return frameworkErr
+	if err == nil {
+		return nil
+	}
+
+	// A type assertion, not As: the walk below visits every error of the tree itself.
+	if frameworkErr, ok := err.(*Error); ok && frameworkErr.IsPublic() { //nolint:errorlint
+		return frameworkErr
+	}
+
+	switch wrapper := err.(type) { //nolint:errorlint
+	case interface{ Unwrap() error }:
+		return FindPublicError(wrapper.Unwrap())
+	case interface{ Unwrap() []error }:
+		for _, member := range wrapper.Unwrap() {
+			if publicErr := FindPublicError(member); publicErr != nil {
+				return publicErr
+			}
 		}
 	}
 

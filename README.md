@@ -71,6 +71,10 @@ func main() {
   - `errs.WrapWithCustomErr(originalErr, wrappingErr error) error` — wraps with a custom sentinel error
   - `errs.WrapfWithCustomErr(originalErr, wrappingErr error, format string, args ...any) error`
 
+- Public messages
+  - `errs.WrapPublic(err error, message string) error` and `errs.WrapfPublic(err error, format string, args ...any) error` — mark a message as safe to show end users
+  - `errs.FindPublicError(err error) error` — the first public error in the error tree, searched like `errors.Is`: depth first, outermost first, the members of a join or of a multi-`%w` wrap from left to right
+
 - Stack utilities
   - `errs.FindOriginalErrorWithStack(err error) *errs.Error` — the last framework error in the chain that has a stack
   - `errs.FindFirstErrorWithStack(err error) error` — the first framework error in the chain
